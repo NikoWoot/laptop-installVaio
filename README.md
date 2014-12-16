@@ -1,4 +1,4 @@
-Laptop-installVaio by NikoWoot.Laptop-installVaio by NikoWoot.
+Laptop-installVaio by NikoWoot.
 ==================
 
 Script to install my Sony VAIO VPCEJ
