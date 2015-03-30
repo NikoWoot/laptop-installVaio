@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==============================================
-# Created with UBUNTU 14.10 (Gnome 3 GUI) - Sony VPCEJ
+# Created with UBUNTU 14.10 - Sony VPCEJ
 # Maintened by Nicolas GAUTIER <ngautier@enroot.fr>
 # ==============================================
 
@@ -21,6 +21,7 @@ echo "deb http://ppa.launchpad.net/webupd8team/gnome3/ubuntu utopic main" > /etc
 echo "deb http://ppa.launchpad.net/webupd8team/sublime-text-3/ubuntu utopic main" > /etc/apt/sources.list.d/webupd8team-ubuntu-sublime-text-3-utopic.list # SublimeText 3
 echo "deb http://ppa.launchpad.net/webupd8team/java/ubuntu trusty main" > /etc/apt/sources.list.d/webupd8team-java.list # Java
 echo "deb-src http://ppa.launchpad.net/webupd8team/java/ubuntu trusty main" >> /etc/apt/sources.list.d/webupd8team-java.list # Java
+echo "deb http://archive.canonical.com/ trusty partner" >> /etc/apt/sources.list.d/skype.list # Skype
 
 # ==============================================
 # Install softwares
@@ -28,10 +29,13 @@ echo "deb-src http://ppa.launchpad.net/webupd8team/java/ubuntu trusty main" >> /
 apt-get update && apt-get upgrade && apt-get dist-upgrade
 
 # apt-get install -y default-jre default-jdk
-apt-get install -y atom sublime-text git htop
-apt-get install -y virtual-box preload
-apt-get install -y vlc google-chrome-stable skype conky cairo-dock
-apt-get install -y oracle-java8-installer
+apt-get install -y --force-yes atom sublime-text git htop \
+			       virtualbox preload vlc google-chrome-stable \
+			       skype \
+			       oracle-java8-installer
+
+# Only for GNOME 3
+apt-get install -y --force-yes conky cairo-dock
 
 # ==============================================
 # Install and configure Docker
@@ -45,9 +49,11 @@ service docker restart
 
 
 # ==============================================
-# Install and configure Fig (Docker utils)
+# Install and configure Docker-Compose (ex Fig)
 # ==============================================
-wget -O /usr/local/bin/fig https://github.com/docker/fig/releases/download/1.0.1/fig-`uname -s`-`uname -m`
+wget -O /usr/local/bin/docker-compose https://github.com/docker/compose/releases/download/1.1.0/docker-compose-`uname -s`-`uname -m`
+wget -O /etc/bash_completion.d/docker-compose https://raw.githubusercontent.com/docker/compose/1.1.0/contrib/completion/bash/docker-compose
+chmod +x /usr/local/bin/docker-compose
 
 # ==============================================
 # Install graphical driver
@@ -58,8 +64,20 @@ apt-get install -y nvidia-304 nvidia-settings
 # Add this line in /usr/share/X11/xorg.conf.d/20-nvidia.conf
 # Option "RegistryDwords" "EnableBrightnessControl=1"
 # nano /usr/share/X11/xorg.conf.d/20-nvidia.conf
-sed -i "s/BoardName      \"GeForce 410M\"/\1\nOption \"RegistryDwords\" \"EnableBrightnessControl=1\"/g" /usr/share/X11/xorg.conf.d/20-nvidia.conf
-sed -i "s/Driver         \"nvidia\"/\1\nOption \"NoLogo\"/g" /usr/share/X11/xorg.conf.d/20-nvidia.conf
+if [ -f /usr/share/X11/xorg.conf.d/20-nvidia.conf ] then
+  sed -i "s/BoardName      \"GeForce 410M\"/\1\nOption \"RegistryDwords\" \"EnableBrightnessControl=1\"/g" /usr/share/X11/xorg.conf.d/20-nvidia.conf
+  sed -i "s/Driver         \"nvidia\"/\1\nOption \"NoLogo\"/g" /usr/share/X11/xorg.conf.d/20-nvidia.conf
+elseif
+  echo '
+  Section "Device"
+    Identifier     "Device0"
+    Driver         "nvidia"
+    VendorName     "NVIDIA Corporation"
+    BoardName      "GeForce 410M"
+    Option         "RegistryDwords" "EnableBrightnessControl=1"
+  EndSection' > /usr/share/X11/xorg.conf.d/20-nvidia.conf
+fi
+
 
 # ==============================================
 # Edit grub file (/etc/default/grub)
@@ -67,7 +85,7 @@ sed -i "s/Driver         \"nvidia\"/\1\nOption \"NoLogo\"/g" /usr/share/X11/xorg
 # Usefull : Fix backlight, shorcut keys and touchpad
 # GRUB_CMDLINE_LINUX="acpi_backlight=vendor acpi_osi=Linux i8042.reset i8042.nomux i8042.nopnp i8042.noloop"
 #nano /etc/default/grub
-sed -i "s/^GRUB_CMDLINE_LINUX=\"\"$/GRUB_CMDLINE_LINUX=\"acpi_backlight=vendor acpi_osi=Linux i8042.reset i8042.nomux i8042.nopnp i8042.noloop\"/g" /etc/fstab
+sed -i "s/^GRUB_CMDLINE_LINUX=\"\"$/GRUB_CMDLINE_LINUX=\"acpi_backlight=vendor acpi_osi=Linux i8042.reset i8042.nomux i8042.nopnp i8042.noloop\"/g" /etc/default/grub
 
 # ==============================================
 # Configure SSD
@@ -89,4 +107,3 @@ chmod +x /etc/cron.daily/trim
 # Restore workstation configuration
 # ==============================================
 sudo export DEBIAN_FRONTEND=dialog
-
